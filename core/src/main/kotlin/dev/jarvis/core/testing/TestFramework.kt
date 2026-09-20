@@ -1,15 +1,22 @@
 package dev.jarvis.core.testing
 
 /**
- * A microscopic test framework.
+ * A microscopic test framework, shared by `:core` and `:app`.
  *
- * The `:core` module is required to have zero dependencies so that it can be compiled
- * and tested with nothing but a Kotlin compiler and a Java runtime (see
- * `tools/local_core_check.sh`). That rules out pulling in JUnit for the canonical suite.
+ * Both modules are required to have zero runtime dependencies so that they can be
+ * compiled and tested with nothing but a Kotlin compiler, `android.jar` and a Java
+ * runtime (see `tools/local_core_check.sh` and `tools/local_android_check.sh`). That
+ * rules out pulling in JUnit for the canonical suites.
  *
- * Instead every behavioural test is written against this harness, and a single thin
- * JUnit bridge (`CoreSelfTestJUnit`) delegates to it so that Gradle and CI run exactly
- * the same assertions as the offline runner.
+ * So every behavioural test is written against this harness, and one thin JUnit bridge
+ * per module (`CoreSelfTestJUnit`, `AppSelfTestJUnit`) delegates to it - which means
+ * Gradle/CI and the offline runners execute exactly the same assertions and can never
+ * drift apart.
+ *
+ * It lives in `main` rather than `test` on purpose: `:app` needs it too, and a test
+ * source set is not visible to a dependent module. It adds ~250 lines of
+ * dependency-free code to the core artifact, and R8 strips it from release builds
+ * because nothing in the shipped app references it.
  */
 
 /** A single failed check. */
@@ -49,9 +56,9 @@ abstract class Suite(override val name: String) : TestSuite {
     override fun cases(): List<TestCase> = registered.toList()
 }
 
-class AssertionError(message: String) : Error(message)
+class CheckFailure(message: String) : Error(message)
 
-fun fail(message: String): Nothing = throw AssertionError(message)
+fun fail(message: String): Nothing = throw CheckFailure(message)
 
 fun assertTrue(condition: Boolean, message: String = "expected true") {
     if (!condition) fail(message)
@@ -169,7 +176,7 @@ object TestRunner {
                         suite = suite.name,
                         test = case.name,
                         message = t.message ?: "(no message)",
-                        throwableClass = if (t is AssertionError) null else t::class.qualifiedName,
+                        throwableClass = if (t is CheckFailure) null else t::class.qualifiedName,
                     )
                 }
             }

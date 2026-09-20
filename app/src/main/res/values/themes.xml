@@ -1,22 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Jarvis" parent="Theme.Material3.Dark.NoActionBar">
-        <item name="colorPrimary">@color/jarvis_primary</item>
-        <item name="colorOnPrimary">@color/jarvis_on_primary</item>
-        <item name="colorSecondary">@color/jarvis_secondary</item>
+    <!--
+      Framework Material theme (android:Theme.Material), not AppCompat/Material3.
+      The app deliberately has no AndroidX dependency, so every attribute below is a
+      platform attribute available since API 21 - and minSdk is 26.
+    -->
+    <style name="Theme.Jarvis" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:colorPrimary">@color/jarvis_primary</item>
+        <item name="android:colorPrimaryDark">@color/jarvis_background</item>
+        <item name="android:colorAccent">@color/jarvis_secondary</item>
         <item name="android:colorBackground">@color/jarvis_background</item>
-        <item name="colorOnBackground">@color/jarvis_on_background</item>
-        <item name="colorSurface">@color/jarvis_surface</item>
-        <item name="colorOnSurface">@color/jarvis_on_surface</item>
-        <item name="colorSurfaceVariant">@color/jarvis_surface_variant</item>
-        <item name="colorOutline">@color/jarvis_outline</item>
-        <item name="colorError">@color/jarvis_error</item>
+        <item name="android:windowBackground">@color/jarvis_background</item>
+        <item name="android:textColorPrimary">@color/jarvis_on_background</item>
+        <item name="android:textColorSecondary">@color/jarvis_on_surface</item>
+        <item name="android:textColorHint">@color/jarvis_outline</item>
         <item name="android:statusBarColor">@color/jarvis_background</item>
         <item name="android:navigationBarColor">@color/jarvis_background</item>
+        <item name="android:colorControlNormal">@color/jarvis_primary</item>
+        <item name="android:colorControlActivated">@color/jarvis_primary</item>
     </style>
 
-    <style name="Widget.Jarvis.Badge" parent="Widget.Material3.CardView.Filled">
-        <item name="cardCornerRadius">12dp</item>
-        <item name="cardElevation">0dp</item>
+    <style name="Jarvis.Card">
+        <item name="android:background">@drawable/bg_card</item>
+        <item name="android:padding">16dp</item>
+    </style>
+
+    <style name="Jarvis.SectionTitle">
+        <item name="android:textColor">@color/jarvis_on_background</item>
+        <item name="android:textSize">22sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="Jarvis.Caption">
+        <item name="android:textColor">@color/jarvis_secondary</item>
+        <item name="android:textSize">12sp</item>
     </style>
 </resources>

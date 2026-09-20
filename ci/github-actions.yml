@@ -1,3 +1,15 @@
+# =======================================================================================
+# Jarvis CI.
+#
+# NOTE: this file lives in ci/ rather than .github/workflows/ because the GitHub App
+# token used for automated development on this repository does not have the `workflows`
+# permission, so pushing to .github/workflows/ is rejected by GitHub. To enable it:
+#
+#     mkdir -p .github/workflows && cp ci/github-actions.yml .github/workflows/ci.yml
+#     git add .github && git commit -m "ci: enable GitHub Actions" && git push
+#
+# See ci/README.md for details.
+# =======================================================================================
 name: CI
 
 on:
@@ -12,14 +24,20 @@ concurrency:
 
 jobs:
   # ---------------------------------------------------------------------------
-  # Job 1: prove the assistant brain builds and passes its tests with NOTHING
-  # but a Kotlin compiler. No Android SDK, no Gradle, no Maven resolution.
-  # This is the job that enforces the ":core has zero dependencies" rule.
+  # Job 1: everything that can be verified WITHOUT the Android SDK.
+  #
+  # This is the job that enforces the project's two central architectural claims:
+  #   * :core has zero dependencies and its whole behavioural suite runs with only
+  #     a Kotlin compiler and a Java runtime;
+  #   * :app has zero third-party dependencies and type-checks against android.jar
+  #     alone.
+  # It runs in ~2 minutes, long before the Gradle job, so a broken foundation fails
+  # fast and cheaply.
   # ---------------------------------------------------------------------------
-  core-offline:
-    name: Core (offline, no Android SDK)
+  offline:
+    name: Offline verification (no Android SDK)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
 
@@ -38,26 +56,23 @@ jobs:
           unzip -q /tmp/kotlinc.zip -d /tmp/kotlinc-dist
           echo "/tmp/kotlinc-dist/kotlinc/bin" >> "$GITHUB_PATH"
 
-      - name: Run offline core test suite
-        run: |
-          chmod +x tools/local_core_check.sh
-          ./tools/local_core_check.sh
+      - name: Core behavioural suite (no Gradle, no network, no SDK)
+        run: ./tools/local_core_check.sh
 
-      # Validates Android resources, manifest component classes and view-binding names
-      # without needing aapt2 or android.jar. Catches a whole class of error before the
-      # (much slower) Gradle job runs.
-      - name: Validate Android resources and manifest
+      - name: Validate Android resources, manifest and view ids
         run: python3 tools/validate_android.py --verbose
 
+      - name: Type-check :app against android.jar + run app suite
+        run: ./tools/local_android_check.sh
+
   # ---------------------------------------------------------------------------
-  # Job 2: the real Android build. Assembles a debug APK, runs unit tests and
-  # Android lint. The debug APK is uploaded as an artifact.
+  # Job 2: the real Android build, with the actual SDK, aapt2 and d8.
   # ---------------------------------------------------------------------------
   android:
-    name: Android build + unit tests + lint
+    name: Android build (assembleDebug + lint)
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    needs: core-offline
+    needs: offline
     steps:
       - uses: actions/checkout@v4
 
@@ -101,7 +116,7 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: warn
 
-      - name: Upload test + lint reports
+      - name: Upload test and lint reports
         if: always()
         uses: actions/upload-artifact@v4
         with:

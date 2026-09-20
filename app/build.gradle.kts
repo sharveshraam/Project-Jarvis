@@ -13,10 +13,8 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        // The assistant must never phone home. Vector drawables only, no support lib
-        // resource duplication.
-        vectorDrawables.useSupportLibrary = true
+        testInstrumentationRunner = "android.app.Instrumentation"
+        vectorDrawables.useSupportLibrary = false
     }
 
     buildTypes {
@@ -48,8 +46,13 @@ android {
         jvmTarget = "17"
     }
 
+    // View binding is deliberately DISABLED. Its generated classes implement
+    // androidx.viewbinding.ViewBinding, which would drag an AndroidX artifact into an
+    // otherwise dependency-free app and - more importantly - would make the UI layer
+    // impossible to type-check offline. findViewById is more verbose but keeps the
+    // entire app compilable against android.jar alone.
     buildFeatures {
-        viewBinding = true
+        viewBinding = false
     }
 
     lint {
@@ -61,41 +64,15 @@ android {
     }
 
     testOptions {
+        // android.jar methods throw by default; returning default values lets pure-logic
+        // unit tests run on the JVM without Robolectric.
         unitTests.isReturnDefaultValues = true
-    }
-
-    packaging {
-        resources {
-            excludes += setOf(
-                "/META-INF/{AL2.0,LGPL2.1}",
-                "/META-INF/DEPENDENCIES",
-                "/META-INF/LICENSE*",
-            )
-        }
     }
 }
 
 dependencies {
+    // The ONLY runtime dependency. :core is pure Kotlin with no dependencies of its own.
     implementation(project(":core"))
 
-    implementation(libs.kotlinx.coroutines.android)
-
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    implementation(libs.androidx.constraintlayout)
-    implementation(libs.androidx.recyclerview)
-    implementation(libs.androidx.activity.ktx)
-    implementation(libs.androidx.fragment.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.lifecycle.viewmodel.ktx)
-    implementation(libs.androidx.lifecycle.service)
-    implementation(libs.androidx.sqlite.ktx)
-    implementation(libs.androidx.work.runtime.ktx)
-    implementation(libs.androidx.biometric)
-
     testImplementation(libs.junit)
-    testImplementation(libs.kotlinx.coroutines.test)
-    androidTestImplementation(libs.androidx.test.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
 }
