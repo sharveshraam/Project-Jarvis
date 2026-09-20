@@ -43,6 +43,12 @@ jobs:
           chmod +x tools/local_core_check.sh
           ./tools/local_core_check.sh
 
+      # Validates Android resources, manifest component classes and view-binding names
+      # without needing aapt2 or android.jar. Catches a whole class of error before the
+      # (much slower) Gradle job runs.
+      - name: Validate Android resources and manifest
+        run: python3 tools/validate_android.py --verbose
+
   # ---------------------------------------------------------------------------
   # Job 2: the real Android build. Assembles a debug APK, runs unit tests and
   # Android lint. The debug APK is uploaded as an artifact.

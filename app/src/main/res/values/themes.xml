@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Jarvis" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/jarvis_primary</item>
+        <item name="colorOnPrimary">@color/jarvis_on_primary</item>
+        <item name="colorSecondary">@color/jarvis_secondary</item>
+        <item name="android:colorBackground">@color/jarvis_background</item>
+        <item name="colorOnBackground">@color/jarvis_on_background</item>
+        <item name="colorSurface">@color/jarvis_surface</item>
+        <item name="colorOnSurface">@color/jarvis_on_surface</item>
+        <item name="colorSurfaceVariant">@color/jarvis_surface_variant</item>
+        <item name="colorOutline">@color/jarvis_outline</item>
+        <item name="colorError">@color/jarvis_error</item>
+        <item name="android:statusBarColor">@color/jarvis_background</item>
+        <item name="android:navigationBarColor">@color/jarvis_background</item>
+    </style>
+
+    <style name="Widget.Jarvis.Badge" parent="Widget.Material3.CardView.Filled">
+        <item name="cardCornerRadius">12dp</item>
+        <item name="cardElevation">0dp</item>
+    </style>
+</resources>
