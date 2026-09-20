@@ -1,0 +1,29 @@
+# Gradle
+.gradle/
+build/
+local.properties
+!gradle/wrapper/gradle-wrapper.jar
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+release/
+
+# Kotlin
+*.class
+
+# Signing material must NEVER be committed
+*.jks
+*.keystore
+keystore.properties
+signing.properties
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Local toolchain used by tools/local_core_check.sh (downloaded, not vendored)
+.tools-cache/
