@@ -28,6 +28,10 @@ Thumbs.db
 # Local toolchain used by tools/local_core_check.sh (downloaded, not vendored)
 .tools-cache/
 
+# APKs produced by tools/build_apk_offline.sh. Binary build output, not source;
+# the debug keystore it signs them with lives under build/ and is gitignored too.
+apk/
+
 # Python bytecode from tools/*.py
 __pycache__/
 *.pyc
