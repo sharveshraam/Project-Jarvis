@@ -1,0 +1,32 @@
+# ---------------------------------------------------------------------------------------
+# Version catalog.
+#
+# This project has NO third-party runtime dependencies. That is a deliberate
+# architectural decision, not an omission - see docs/ARCHITECTURE.md ("Dependency policy").
+#
+# Everything the assistant needs is available in the Android framework itself:
+#   AccessibilityService, NotificationListenerService, TextToSpeech, SpeechRecognizer,
+#   SQLiteOpenHelper, AlarmManager, JobScheduler, MediaController, AudioManager,
+#   PdfRenderer, BiometricPrompt, KeyguardManager, ContentResolver, ConnectivityManager.
+#
+# The consequences are concrete and desirable for a privacy-first assistant:
+#   * the whole app type-checks against android.jar alone (tools/local_android_check.sh)
+#   * no supply chain: nothing is fetched at build time except the Kotlin plugin
+#   * the APK stays small and the attack surface stays auditable
+#
+# The only external artifact is junit, and only for tests.
+# ---------------------------------------------------------------------------------------
+
+[versions]
+agp = "8.7.3"
+kotlin = "2.0.21"
+junit = "4.13.2"
+
+[libraries]
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+junit = { module = "junit:junit", version.ref = "junit" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

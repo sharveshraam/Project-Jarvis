@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="jarvis_background">#FF0E1116</color>
+    <color name="jarvis_surface">#FF171B22</color>
+    <color name="jarvis_surface_variant">#FF222834</color>
+    <color name="jarvis_primary">#FF5AC8FA</color>
+    <color name="jarvis_on_primary">#FF04222F</color>
+    <color name="jarvis_secondary">#FF9BE564</color>
+    <color name="jarvis_on_background">#FFE8ECF1</color>
+    <color name="jarvis_on_surface">#FFE8ECF1</color>
+    <color name="jarvis_outline">#FF39414F</color>
+    <color name="jarvis_error">#FFFF6B6B</color>
+    <color name="jarvis_local_badge">#FF2E7D32</color>
+    <color name="jarvis_online_badge">#FFB26A00</color>
+    <color name="ic_launcher_background">#FF0E1116</color>
+</resources>
