@@ -23,6 +23,13 @@ object Text {
         "am", "i", "me", "my", "myself", "we", "our", "you", "your", "he", "him", "his",
         "she", "her", "it", "its", "they", "them", "their", "what", "which", "who", "whom",
         "this", "that", "these", "those", "hey", "ok", "okay", "yeah", "bro", "dude",
+        // Contractions carry no topical content but survive normalisation, because dropping
+        // apostrophes would turn "i'm" into two tokens and "don't" into "don" + "t".
+        "i'm", "it's", "that's", "there's", "here's", "what's", "who's", "let's",
+        "don't", "doesn't", "didn't", "can't", "cannot", "won't", "wouldn't", "shouldn't",
+        "isn't", "aren't", "wasn't", "weren't", "haven't", "hasn't", "hadn't",
+        "i'll", "you'll", "he'll", "she'll", "we'll", "they'll", "it'll",
+        "i've", "you've", "we've", "they've", "you're", "we're", "they're",
     )
 
     /**

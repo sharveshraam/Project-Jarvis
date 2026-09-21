@@ -27,3 +27,7 @@ Thumbs.db
 
 # Local toolchain used by tools/local_core_check.sh (downloaded, not vendored)
 .tools-cache/
+
+# Python bytecode from tools/*.py
+__pycache__/
+*.pyc

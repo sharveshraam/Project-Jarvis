@@ -108,10 +108,15 @@ if [[ ${#TEST_SOURCES[@]} -eq 0 ]]; then
 fi
 
 echo "==> compiling ${#TEST_SOURCES[@]} test source files"
+# -Xfriend-paths makes `internal` declarations in :core visible to its own test sources, which is
+# exactly what the Kotlin Gradle plugin does for a test source set. Without it the offline runner
+# would be stricter than `./gradlew :core:test`, and suites could not exercise internal
+# collaborators such as the NLU rule table.
 "$KOTLINC_BIN" \
   -nowarn \
   -jvm-target 17 \
   -cp "$MAIN_CLASSES" \
+  -Xfriend-paths="$MAIN_CLASSES" \
   -d "$TEST_CLASSES" \
   "${TEST_SOURCES[@]}"
 
