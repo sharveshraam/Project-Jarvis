@@ -5,10 +5,11 @@
 ```bash
 ./tools/verify_all.sh          # everything, offline, no SDK and no network
 ./tools/local_core_check.sh    # just the :core behavioural suite
+python3 tools/validate_workflow.py --require-yaml   # the GitHub Actions workflow itself
 ./gradlew :core:test :app:test # the same assertions under Gradle/CI
 ```
 
-Current totals: **246 `:core` checks and 3 `:app` checks, all passing.**
+Current totals: **247 `:core` checks (12 suites) and 3 `:app` checks, all passing.**
 
 ## Structure
 
@@ -61,7 +62,7 @@ need `android.jar` on the classpath.
 | `nlu/temporal` | 33 | Durations (fractional, compound, articles), clock times (spoken forms, 24-hour, meridiem), day offsets and names, dayparts from user config, recurrence with real intervals, description strings, and refusal to resolve a vague time |
 | `nlu/intent-rules` | 36 | One or more real sentences per intent group, the look-alike pairs, wake-word handling, evidence strings, ambiguity surfacing, and sentences that must match nothing |
 | `nlu/entities` | 34 | Every extractor: apps and aliases, URLs, ordinals, numbers, percentages, levels, directions, settings and values, quoted spans, elements, contacts, topics, assistant names, preferences, documents, automation trigger/action, arithmetic, conversions — plus what must not be extracted |
-| `nlu/engine` | 36 | End-to-end parsing: multi-step decomposition and its rejection, time attached but removed from task text, missing-slot notes, conversation context, sensitivity flags, the reranker seam, and regressions |
+| `nlu/engine` | 37 | End-to-end parsing: multi-step decomposition and its rejection, time attached but removed from task text, missing-slot notes, conversation context, sensitivity flags, the reranker seam, the sentence the README uses as its example, and regressions |
 | `app/notification-channels` | 3 | Channel ids, importance and the manifest/contract agreement |
 
 ## How the tests are written
@@ -86,6 +87,15 @@ defect and was fixed in the implementation: day-offset arithmetic that made 23:0
 `"afternoon"` matching the daypart `"noon"`, `"what can you do"` matching a time hint because of the
 substring `"at "`, `"on friday at 6pm"` becoming a permanent weekly alarm, `"1.5 hours"` parsing as
 5 hours, `"every 30 minutes"` firing every minute. The commit message for Stage 3 lists them.
+
+The same rule applies to the non-Kotlin checks. Building a real APK offline with `aapt2` rejected
+`res/values/themes.xml`: three dotted styles (`Jarvis.Card`, `Jarvis.SectionTitle`, `Jarvis.Caption`)
+declared no `parent`, and aapt2 resolves such a name as a child of the style named by its prefix, so
+it demanded a style `Jarvis` that did not exist. That defect would have broken
+`./gradlew :app:assembleDebug` and the CI workflow identically - the offline type-check could not see
+it because `android.jar` says nothing about resource tables. The base style was added, and
+`tools/validate_android.py` gained `check_style_hierarchy()`, so the rule is now enforced by
+`./tools/verify_all.sh` rather than discovered by a build.
 
 **Determinism everywhere.** `FixedClock` replaces the system clock, `FixedRandomBytes` replaces
 secure random, and the in-memory stores replace SQLite. No test depends on the wall clock, on locale

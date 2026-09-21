@@ -107,7 +107,7 @@ provider being enabled by you first.
 Privacy *controls* exist as tested logic in `:core`. The Android app is still a shell (Stage 1) and
 SQLite persistence arrives in Stage 5, so **at this commit there is no long-lived personal data on a
 device yet** — the in-memory stores used by the test suites are process-local and die with the
-process. This document describes the design that is implemented in code and verified by 246 offline
+process. This document describes the design that is implemented in code and verified by 247 offline
 checks; it will be updated as each storage-backed stage lands.
 
 If a future change would weaken any statement here, the change is not acceptable without updating

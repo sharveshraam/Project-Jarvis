@@ -89,7 +89,8 @@ core/    pure Kotlin/JVM. No Android imports at all.
 app/     the Android application. Framework APIs only — no AndroidX, no third-party libraries.
          Adapts Android services to the ports :core declares.
 tools/   offline verification: compile + run the suites with no SDK, no Gradle, no network.
-ci/      the GitHub Actions workflow definition (see ci/README.md to enable it).
+.github/workflows/
+         build-apk.yml — builds a debug APK on every push to main (GitHub Actions).
 docs/    ARCHITECTURE, PRIVACY, SECURITY, DEVELOPMENT, TESTING, ROADMAP.
 ```
 
@@ -107,11 +108,13 @@ No Android SDK, no Gradle and no network are required:
 
 That runs, in order:
 
-1. **`:core` offline behavioural suite** — 246 checks, compiled with `kotlinc` and run on the JVM.
+1. **`:core` offline behavioural suite** — 247 checks, compiled with `kotlinc` and run on the JVM.
 2. **Android resource validation** — every `R.layout`/`R.id` reference exists, every manifest
    component resolves, every declared view binding is real.
 3. **Android type-check + app suite** — `:core` and `:app` compiled together against the *real*
    `android.jar` for API 35, then the app's own checks run on the JVM.
+4. **Workflow validation** — `.github/workflows/build-apk.yml` is parsed and checked for banned
+   patterns, version drift and broken embedded shell (`tools/validate_workflow.py`).
 
 Individual stages: `./tools/local_core_check.sh`, `./tools/validate_android.py`,
 `./tools/local_android_check.sh`.
@@ -120,11 +123,90 @@ With a normal Android toolchain the same suites run under Gradle:
 
 ```bash
 ./gradlew :core:test :app:test       # identical assertions, via a thin JUnit bridge
-./gradlew assembleDebug              # unsigned debug APK
+./gradlew :app:assembleDebug         # debug APK, signed with the SDK's debug key
+./gradlew :app:assembleRelease       # release APK, UNSIGNED (no signing material is committed)
 ```
 
 Details, including how to build without network access, are in
 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) and [docs/TESTING.md](docs/TESTING.md).
+
+## Get an APK without building one yourself
+
+You do not need Android Studio, an Android SDK or a Java toolchain to install this app. A GitHub
+Actions workflow builds a debug APK for you:
+
+**[.github/workflows/build-apk.yml](.github/workflows/build-apk.yml)** — workflow name
+**`Build Android APK`**.
+
+### Where to find it
+
+1. Open the repository on GitHub → **Actions** tab.
+2. Pick **Build Android APK** in the workflow list on the left.
+3. It runs automatically on every push to `main`. To build any other branch (or to build `main`
+   again on demand), press **Run workflow** and choose the branch.
+
+### Where to download the APK
+
+1. Open the run (green tick = it produced an APK).
+2. Scroll to **Artifacts** at the bottom of the run summary page.
+3. Download **`android-debug-apk`**. It is a zip containing one file: `app-debug.apk`.
+4. Copy it to the device and open it. Android will ask you to allow installation from that source;
+   `adb install app-debug.apk` works too.
+
+Artifacts are kept for 30 days and require you to be signed in to GitHub.
+
+### What it builds
+
+| | |
+|---|---|
+| Gradle task | `./gradlew :app:assembleDebug`, through the committed wrapper (Gradle 8.11.1) |
+| JDK | Temurin 17 — the level `app/build.gradle.kts` and `core/build.gradle.kts` declare |
+| Android SDK | `platforms;android-35` + `build-tools;35.0.0`, installed from the runner's `sdkmanager` |
+| Output APK | `app/build/outputs/apk/debug/app-debug.apk` |
+| Package id | `dev.jarvis.assistant.debug` (the debug build type adds a `.debug` suffix) |
+| Version | `0.1.0-debug`, versionCode 1 |
+
+Two jobs run in order:
+
+1. **Offline verification** — the complete `:core` behavioural suite (all 247 checks, including every
+   NLU test), the Android resource/manifest validation, and a type-check of `:app` against the real
+   `android.jar`. No SDK needed; it fails in a couple of minutes if the foundation is broken.
+2. **Build debug APK** — only if job 1 passed. Installs the SDK, runs the Gradle build, then proves
+   the output really is an APK (size, ZIP structure, `AndroidManifest.xml`/`classes.dex`/
+   `resources.arsc` present, `aapt2 dump badging` identity) before uploading it. Nothing is uploaded
+   unless those checks pass, and a run with no APK is a failed run, never a green one.
+
+### Cannot run Gradle at all?
+
+```bash
+./tools/build_apk_offline.sh        # -> apk/Jarvis-0.1.0-debug.apk
+```
+
+This builds the same debug APK with **no Gradle, no Android Studio and no network at build time**, by
+performing the five transformations AGP would — `aapt2 compile`/`link`, `kotlinc`, `d8`, `zipalign`,
+`apksigner` — against the same sources and the same values read out of `app/build.gradle.kts`. It is
+for machines where `dl.google.com` and the Maven repositories are unreachable (air-gapped networks,
+sandboxes). It needs the build-tools 35.0.0 binaries already on disk
+(`BUILD_TOOLS_DIR=$ANDROID_HOME/build-tools/35.0.0`) and signs with a throwaway debug key generated
+into `build/`. It then verifies its own output: signature schemes, badging, zip alignment, and that
+every resource id compiled into the app equals the id in `resources.arsc`.
+
+It is *not* AGP: no manifest merger (this project has exactly one manifest), no `BuildConfig`, no
+lint, no R8. `./gradlew :app:assembleDebug` — or the workflow above — remains the reference build.
+
+### What this is *not*
+
+- **It is a debug APK.** It is signed with the Android SDK's public debug key, which every device
+  accepts for sideloading but which is not a release signature. It cannot be published to Google
+  Play, and it installs alongside — not over — a release build, because of the `.debug` package
+  suffix.
+- **No secrets and no signing configuration** are used or stored by the workflow. Nothing needs to be
+  configured before the first run.
+- **A signed release build is not automated yet.** `./gradlew :app:assembleRelease` produces an
+  *unsigned* APK because no keystore is committed, and `app/proguard-rules.pro` plus your own
+  `signingConfig` are required first. That is deliberately deferred — see
+  [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#releasing) and
+  [docs/SECURITY.md](docs/SECURITY.md).
 
 ## Documentation
 

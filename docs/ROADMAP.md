@@ -19,9 +19,17 @@ Status legend: ✅ complete · 🚧 in progress · ⬜ not started.
   the XML directly.
 - `tools/local_android_check.sh` — compile `:core` + `:app` against the real `android.jar` (API 35)
   with `-no-jdk`, generating an offline `R` class first.
-- `tools/verify_all.sh` — all three, in CI order.
-- `ci/github-actions.yml` — complete workflow, parked in `ci/` because the automation token lacks the
-  `workflows` permission (see `ci/README.md`).
+- `tools/verify_all.sh` — all four, in CI order.
+- `tools/build_apk_offline.sh` — build a real, installable debug APK (aapt2 → kotlinc → d8 →
+  zipalign → apksigner) with no Gradle, no SDK and no network. Added after the sandbox turned out to
+  block every Maven and SDK host; it also found a resource defect the type-check could not see (see
+  `docs/DEVELOPMENT.md` → "It found a real bug").
+- `tools/validate_workflow.py` — checks `.github/workflows/build-apk.yml` offline: triggers,
+  permissions, artifact name and path, version agreement with `gradle/`, banned failure-hiding
+  patterns, and `bash -n` plus strict mode on every embedded shell script.
+- `.github/workflows/build-apk.yml` — live GitHub Actions workflow (`Build Android APK`): offline
+  verification, then a real Gradle `:app:assembleDebug` published as the `android-debug-apk`
+  artifact. No Android Studio, no local SDK and no signing material required.
 
 ## ✅ Stage 1 — Application shell
 
