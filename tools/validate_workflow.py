@@ -34,10 +34,14 @@ import tempfile
 from pathlib import Path
 
 WORKFLOW_DEFAULT = ".github/workflows/build-apk.yml"
-REQUIRED_USES = {
-    "actions/checkout@v4",
-    "actions/setup-java@v4",
-    "actions/upload-artifact@v4",
+# Current stable majors of the GitHub-maintained actions this workflow may use, verified
+# against each repository's releases on 2026-09-21 (checkout v7.0.1, setup-java v6.0.1,
+# upload-artifact v7.0.1). A pin below the major listed here is stale; a pin above it means
+# this table needs updating, which is the point of failing loudly.
+CURRENT_MAJORS = {
+    "actions/checkout": 7,
+    "actions/setup-java": 6,
+    "actions/upload-artifact": 7,
 }
 BANNED_PATTERNS = [
     (r"\|\|\s*true", "`|| true` swallows a failing command"),
@@ -153,11 +157,28 @@ def main(argv: list[str]) -> int:
 
     # ---- actions -----------------------------------------------------------------
     used = {step["uses"] for _, step in steps if "uses" in step}
-    report.check(used == REQUIRED_USES,
-                 "only GitHub-maintained actions at current majors are used",
-                 f"got {sorted(used)}")
-    stale = sorted(u for u in used if re.search(r"@(v1|v2|v3|main|master)$", u))
-    report.check(not stale, "no stale action revision is pinned", str(stale))
+    unknown = sorted(u for u in used if u.split("@")[0] not in CURRENT_MAJORS)
+    report.check(not unknown,
+                 "only the GitHub-maintained actions this project expects are used",
+                 f"got {unknown}")
+    stale, ahead = [], []
+    for ref in sorted(used):
+        name, _, rev = ref.partition("@")
+        if name not in CURRENT_MAJORS:
+            continue  # already reported by the unknown-action check above
+        m = re.fullmatch(r"v(\d+)", rev)
+        if not m:
+            stale.append(f"{ref} (pin a major version tag, not {rev!r})")
+            continue
+        major = int(m.group(1))
+        if major < CURRENT_MAJORS[name]:
+            stale.append(f"{ref} (current is v{CURRENT_MAJORS[name]})")
+        elif major > CURRENT_MAJORS[name]:
+            ahead.append(f"{ref} (this validator knows v{CURRENT_MAJORS[name]})")
+    report.check(not stale, "no action is pinned below its current stable major", str(stale))
+    report.check(not ahead,
+                 "no action is pinned above the major this validator was verified against",
+                 str(ahead))
 
     # ---- the artifact ------------------------------------------------------------
     uploads = [step for _, step in steps
