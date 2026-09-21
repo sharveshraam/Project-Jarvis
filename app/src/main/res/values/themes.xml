@@ -20,6 +20,14 @@
         <item name="android:colorControlActivated">@color/jarvis_primary</item>
     </style>
 
+    <!--
+      Base style for the dotted names below. This is not decoration: aapt2 resolves a style
+      named "Jarvis.Card" that declares no parent as a *child* of the style "Jarvis", and
+      fails the link step ("resource style/Jarvis not found") if that style does not exist.
+      tools/validate_android.py checks this rule so the failure cannot reach a build.
+    -->
+    <style name="Jarvis" />
+
     <style name="Jarvis.Card">
         <item name="android:background">@drawable/bg_card</item>
         <item name="android:padding">16dp</item>

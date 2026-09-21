@@ -139,6 +139,27 @@ def collect_values_resources() -> tuple[dict[str, set[str]], dict[str, int]]:
     return declared, format_args
 
 
+def collect_style_parents() -> dict[str, bool]:
+    """Every declared `<style>` name -> whether it carries an explicit `parent` attribute.
+
+    aapt2 treats a dotted style name with no explicit parent as a child of the style named
+    by its prefix, and fails to link if that prefix style does not exist. `Theme.Jarvis.Bar`
+    therefore requires either a declared `Theme.Jarvis.Bar` parent or a `Theme.Jarvis` style.
+    """
+    parents: dict[str, bool] = {}
+    values_dirs = [d for d in RES.iterdir() if d.is_dir() and strip_qualifiers(d.name) == "values"] if RES.exists() else []
+    for values_dir in sorted(values_dirs):
+        for xml_file in sorted(values_dir.glob("*.xml")):
+            try:
+                root = ET.parse(xml_file).getroot()
+            except ET.ParseError:
+                continue  # check_xml_wellformed already reported it
+            for child in root:
+                if child.tag == "style" and child.get("name"):
+                    parents[child.get("name")] = "parent" in child.attrib
+    return parents
+
+
 def rel(path: Path) -> str:
     try:
         return str(path.relative_to(REPO_ROOT))
@@ -200,6 +221,19 @@ def check_xml_references(resources: dict[str, set[str]]) -> None:
                 note(f"{rel(xml_file)}: @{rtype}/{name} not found locally (may be framework-provided)")
                 continue
             fail(f"{rel(xml_file)}: @{rtype}/{name} does not resolve to a declared resource")
+
+
+def check_style_hierarchy(style_parents: dict[str, bool]) -> None:
+    """Fail when a dotted style relies on an implicit parent that was never declared."""
+    for name, has_explicit_parent in sorted(style_parents.items()):
+        if has_explicit_parent or "." not in name:
+            continue
+        prefix = name.rsplit(".", 1)[0]
+        if prefix not in style_parents:
+            fail(f'res/values: <style name="{name}"> declares no parent, so aapt2 resolves it '
+                 f'as a child of style "{prefix}", which does not exist. aapt2 link would fail '
+                 f'with "resource style/{prefix} not found". Declare that style, or give this '
+                 f'one an explicit parent (parent="" means none).')
 
 
 def check_kotlin_r_references(resources: dict[str, set[str]]) -> None:
@@ -321,6 +355,7 @@ def main() -> int:
     resources["id"] = collect_ids()
 
     check_xml_references(resources)
+    check_style_hierarchy(collect_style_parents())
     check_kotlin_r_references(resources)
     check_binding_references(resources.get("layout", set()))
     check_manifest_components()
