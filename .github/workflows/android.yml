@@ -1,26 +1,46 @@
-name: Android CI
+name: Build Jarvis Android APK
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch, tag, or commit to build
+        required: true
+        default: arena/01a0bfcf-project-jarvis
+        type: string
+
+permissions:
+  contents: read
 
 jobs:
   build:
-
+    name: Build debug APK
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v4
-    - name: set up JDK 11
-      uses: actions/setup-java@v4
-      with:
-        java-version: '11'
-        distribution: 'temurin'
-        cache: gradle
+      - name: Check out app source
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref }}
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    - name: Build with Gradle
-      run: ./gradlew build
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build APK
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:assembleDebug
+
+      - name: Upload installable debug APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: jarvis-android-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
