@@ -1,0 +1,53 @@
+# Gradle
+.gradle/
+build/
+local.properties
+!gradle/wrapper/gradle-wrapper.jar
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+release/
+
+# Kotlin
+*.class
+
+# Signing material must NEVER be committed
+*.jks
+*.keystore
+keystore.properties
+signing.properties
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Local toolchain used by tools/local_core_check.sh (downloaded, not vendored)
+.tools-cache/
+
+# APKs produced by tools/build_apk_offline.sh. Binary build output, not source;
+# the debug keystore it signs them with lives under build/ and is gitignored too.
+apk/
+
+# Python bytecode from tools/*.py
+__pycache__/
+*.pyc
+
+# .NET / Windows desktop (desktop/)
+bin/
+obj/
+publish/
+*.user
+*.suo
+.vs/
+TestResults/
+*.trx
+desktop/publish/
+*.exe
+!gradlew
+# Secrets — never commit API keys or vault files
+gemini.key
+*.key

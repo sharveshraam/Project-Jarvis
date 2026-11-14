@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 11 and below cloud backup rules.
+
+  Jarvis is local-first: conversations, memories, notes, tasks, transcripts and the
+  knowledge base are the user's private data and are NOT uploaded to any cloud backup
+  by default. The app also sets android:allowBackup="false"; these rules are the
+  belt-and-braces version for the case where an OEM or a future change re-enables it.
+
+  Users who want their data off the device use the explicit in-app Export control
+  (see docs/PRIVACY.md), which produces a file they choose the destination for.
+-->
+<full-backup-content>
+    <exclude domain="database" path="." />
+    <exclude domain="sharedpref" path="." />
+    <exclude domain="file" path="." />
+    <exclude domain="external" path="." />
+    <exclude domain="root" path="." />
+</full-backup-content>

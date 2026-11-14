@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launcher foreground: a stylised "core with orbiting signal", drawn as a vector so
+     the repository contains no binary assets. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Outer ring -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#5AC8FA"
+        android:strokeWidth="3"
+        android:pathData="M54,26 A28,28 0 1,1 53.99,26" />
+
+    <!-- Core -->
+    <path
+        android:fillColor="#5AC8FA"
+        android:pathData="M54,42 A12,12 0 1,1 53.99,42 Z" />
+
+    <!-- Orbiting nodes -->
+    <path
+        android:fillColor="#9BE564"
+        android:pathData="M54,22 A4,4 0 1,1 53.99,22 Z" />
+    <path
+        android:fillColor="#9BE564"
+        android:pathData="M82,54 A4,4 0 1,1 81.99,54 Z" />
+    <path
+        android:fillColor="#9BE564"
+        android:pathData="M26,54 A4,4 0 1,1 25.99,54 Z" />
+</vector>

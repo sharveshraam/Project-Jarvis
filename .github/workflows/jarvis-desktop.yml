@@ -1,0 +1,70 @@
+name: Build JARVIS Desktop (Windows)
+
+on:
+  push:
+    branches: ["main", "arena/98f80e17-project-jarvis"]
+    paths:
+      - "desktop/**"
+      - ".github/workflows/jarvis-desktop.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "desktop/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-package:
+    name: Build, test and package JARVIS Desktop
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore desktop/Jarvis.sln
+
+      - name: Build (Release)
+        run: dotnet build desktop/Jarvis.sln --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test desktop/Jarvis.sln --configuration Release --no-build --logger "console;verbosity=normal"
+
+      - name: Publish self-contained Windows x64
+        run: dotnet publish desktop/src/Jarvis.Desktop/Jarvis.Desktop.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -o desktop/publish/win-x64
+
+      - name: Create portable ZIP
+        shell: pwsh
+        run: |
+          Compress-Archive -Path desktop/publish/win-x64/* -DestinationPath desktop/publish/JARVIS-Portable-win-x64.zip -Force
+
+      - name: Install Inno Setup
+        run: choco install innosetup --yes --no-progress
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" desktop/installer/Jarvis.iss
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: JARVIS-Setup
+          path: desktop/publish/JARVIS-Setup.exe
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload portable build
+        uses: actions/upload-artifact@v7
+        with:
+          name: JARVIS-Portable
+          path: desktop/publish/JARVIS-Portable-win-x64.zip
+          if-no-files-found: error
+          retention-days: 30
