@@ -1,0 +1,156 @@
+# JARVIS Desktop — Windows build, tests, smoke test and installer.
+#
+# This file is kept under desktop/jarvis/ci/ because it could not be pushed to .github/workflows/
+# from the automated session that wrote it (the GitHub token had no "workflow" permission).
+# To enable it, copy it to:
+#
+#     .github/workflows/jarvis-windows-build.yml
+#
+# It is independent of the Android workflow (android.yml): it only reacts to changes under
+# desktop/jarvis/ and only reads files from that folder.
+
+name: JARVIS Desktop (Windows)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'desktop/jarvis/**'
+      - '.github/workflows/jarvis-windows-build.yml'
+  pull_request:
+    paths:
+      - 'desktop/jarvis/**'
+      - '.github/workflows/jarvis-windows-build.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jarvis-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: pwsh
+    working-directory: desktop/jarvis
+
+jobs:
+  build:
+    name: Build, test and package
+    runs-on: windows-latest
+    timeout-minutes: 40
+    env:
+      DOTNET_NOLOGO: 'true'
+      DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Read version
+        id: version
+        run: |
+          [xml]$props = Get-Content Directory.Build.props
+          $version = ($props.Project.PropertyGroup | ForEach-Object { $_.Version } | Where-Object { $_ } | Select-Object -First 1)
+          if (-not $version) { throw 'No <Version> in Directory.Build.props.' }
+          "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "JARVIS version $version"
+
+      - name: Restore
+        run: dotnet restore Project-JARVIS.sln
+
+      - name: Build
+        run: dotnet build Project-JARVIS.sln -c Release --no-restore
+
+      - name: Test
+        run: dotnet test Project-JARVIS.sln -c Release --no-build --logger "trx;LogFileName=tests.trx" --logger "console;verbosity=normal" --results-directory artifacts/test-results
+
+      - name: Publish (self-contained, win-x64)
+        run: dotnet publish src/Jarvis.Desktop/Jarvis.Desktop.csproj -c Release -r win-x64 --self-contained true -o publish
+
+      # Starts the published app with a throw-away data folder, shows both windows, runs local commands
+      # end to end and exits. A non-zero exit code or a missing PASS line fails the job.
+      - name: Smoke test the published app
+        run: |
+          $log = Join-Path $PWD 'artifacts\smoke-test.log'
+          New-Item -ItemType Directory -Force (Split-Path $log) | Out-Null
+          $process = Start-Process -FilePath (Join-Path $PWD 'publish\Jarvis.exe') -ArgumentList '--smoke-test', "`"$log`"" -PassThru
+          $null = $process.Handle
+          if (-not $process.WaitForExit(180000)) {
+            $process.Kill()
+            throw 'The smoke test did not finish within three minutes.'
+          }
+          if (Test-Path $log) { Get-Content $log } else { Write-Host 'No smoke test log was written.' }
+          if ($process.ExitCode -ne 0) { throw "The smoke test exited with code $($process.ExitCode)." }
+          if (-not (Select-String -Path $log -Pattern '^PASS$' -Quiet)) { throw 'The smoke test log has no PASS line.' }
+
+      - name: Build installer (Inno Setup)
+        run: |
+          $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { throw 'Inno Setup could not be installed.' }
+          }
+          if (-not (Test-Path $iscc)) {
+            $found = Get-Command iscc.exe -ErrorAction SilentlyContinue
+            if (-not $found) { throw 'ISCC.exe was not found after installing Inno Setup.' }
+            $iscc = $found.Source
+          }
+          & $iscc installer\Jarvis.iss "/DAppVersion=${{ steps.version.outputs.version }}" "/DSourceDir=$(Join-Path $PWD 'publish')"
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE." }
+          Get-ChildItem installer\Output
+
+      # Installs silently into a scratch folder, runs the installed copy's smoke test, then uninstalls.
+      - name: Verify the installer
+        run: |
+          $setup = Get-ChildItem installer\Output\JARVIS-Setup-*.exe | Select-Object -First 1
+          if (-not $setup) { throw 'No installer was produced.' }
+          $target = Join-Path $env:RUNNER_TEMP 'jarvis-install'
+          $install = Start-Process -FilePath $setup.FullName -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/CURRENTUSER', '/MERGETASKS=!desktopicon', "/DIR=`"$target`"", "/LOG=`"$(Join-Path $PWD 'artifacts\install.log')`"" -PassThru -Wait
+          if ($install.ExitCode -ne 0) { throw "Setup exited with code $($install.ExitCode)." }
+          $exe = Join-Path $target 'Jarvis.exe'
+          if (-not (Test-Path $exe)) { throw 'Jarvis.exe is missing after installation.' }
+
+          $log = Join-Path $PWD 'artifacts\smoke-test-installed.log'
+          $process = Start-Process -FilePath $exe -ArgumentList '--smoke-test', "`"$log`"" -PassThru
+          $null = $process.Handle
+          if (-not $process.WaitForExit(180000)) {
+            $process.Kill()
+            throw 'The installed copy did not finish its smoke test within three minutes.'
+          }
+          if (Test-Path $log) { Get-Content $log }
+          if ($process.ExitCode -ne 0) { throw "The installed copy exited with code $($process.ExitCode)." }
+
+          $uninstaller = Get-ChildItem (Join-Path $target 'unins*.exe') | Select-Object -First 1
+          if (-not $uninstaller) { throw 'No uninstaller was installed.' }
+          $remove = Start-Process -FilePath $uninstaller.FullName -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -PassThru -Wait
+          if ($remove.ExitCode -ne 0) { throw "The uninstaller exited with code $($remove.ExitCode)." }
+          Start-Sleep -Seconds 5
+          if (Test-Path $exe) { throw 'Jarvis.exe is still present after uninstalling.' }
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: JARVIS-Setup-${{ steps.version.outputs.version }}
+          path: desktop/jarvis/installer/Output/JARVIS-Setup-*.exe
+          if-no-files-found: error
+
+      - name: Upload portable build
+        uses: actions/upload-artifact@v4
+        with:
+          name: JARVIS-portable-win-x64-${{ steps.version.outputs.version }}
+          path: desktop/jarvis/publish/
+          if-no-files-found: error
+
+      - name: Upload test results and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jarvis-test-results
+          path: desktop/jarvis/artifacts/
+          if-no-files-found: warn
