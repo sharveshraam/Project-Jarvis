@@ -22,6 +22,6 @@ A lightweight, voice-first personal AI assistant for Windows 11. See
 `dotnet test desktop/Jarvis.sln -c Release`
 
 ## Installer / portable build
-GitHub Actions (`.github/workflows/jarvis-desktop.yml`) builds, tests, publishes
+GitHub Actions (`desktop/ci/jarvis-desktop.yml (copy to .github/workflows/ — see note)`) builds, tests, publishes
 a self-contained win-x64 app, and produces `JARVIS-Setup.exe` (Inno Setup,
 per-user) + `JARVIS-Portable-win-x64.zip` as artifacts.
