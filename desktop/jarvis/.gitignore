@@ -1,0 +1,10 @@
+# JARVIS Desktop build output (scoped to desktop/jarvis only)
+bin/
+obj/
+publish/
+artifacts/
+TestResults/
+.vs/
+*.user
+*.suo
+installer/Output/

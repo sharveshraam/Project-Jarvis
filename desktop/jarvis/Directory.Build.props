@@ -1,0 +1,18 @@
+<Project>
+  <!-- Applies only to desktop/jarvis/**. MSBuild stops at the first Directory.Build.props it finds,
+       so nothing outside this folder (e.g. the Android/Gradle app) influences or is influenced by it. -->
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <Version>1.0.0</Version>
+    <Product>JARVIS</Product>
+    <Company>Project JARVIS</Company>
+    <Copyright>Project JARVIS contributors</Copyright>
+    <NeutralLanguage>en</NeutralLanguage>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591;NU1510</NoWarn>
+  </PropertyGroup>
+</Project>
