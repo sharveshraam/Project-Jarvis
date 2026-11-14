@@ -1,13 +1,10 @@
 # JARVIS Desktop — Windows build, tests, smoke test and installer.
 #
-# This file is kept under desktop/jarvis/ci/ because it could not be pushed to .github/workflows/
-# from the automated session that wrote it (the GitHub token had no "workflow" permission).
-# To enable it, copy it to:
+# Active location: .github/workflows/jarvis-windows-build.yml
+# A reference copy is kept at desktop/jarvis/ci/jarvis-windows-build.yml.
 #
-#     .github/workflows/jarvis-windows-build.yml
-#
-# It is independent of the Android workflow (android.yml): it only reacts to changes under
-# desktop/jarvis/ and only reads files from that folder.
+# Runs when anything under desktop/jarvis/ (or this file) changes, and on manual dispatch.
+# It only reads files from desktop/jarvis/.
 
 name: JARVIS Desktop (Windows)
 
