@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- ============================================================================
+         PERMISSIONS
+
+         Every permission here is optional at runtime except the ones the OS grants at
+         install time. The assistant is designed so that *no* permission is required to
+         use it as a conversational, memory-keeping, offline assistant. Each permission
+         unlocks one specific capability, and the in-app Permissions screen explains
+         exactly that (see docs/SECURITY.md for the full matrix).
+
+         Deliberately NOT requested:
+           * QUERY_ALL_PACKAGES   - we use a scoped <queries> block instead, so we can
+                                    see launchable apps without blanket package visibility.
+           * READ_SMS             - reading private messages is out of scope by design.
+           * ACCESS_BACKGROUND_LOCATION - never needed; location automations run in the
+                                    foreground only.
+           * BIND_* / system permissions - never requested; the assistant does not try to
+                                    become a device owner or bypass the lock screen.
+         ============================================================================ -->
+
+    <!-- Offline detection. The assistant must know whether it is online in order to
+         route a request to a local or an online provider, and to tell the user honestly
+         when something needs connectivity. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Only used when the user explicitly enables an ONLINE provider in Settings.
+         With online AI disabled the app makes no network calls at all. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Voice input: push-to-talk, voice conversation and the optional wake word. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Required on Android 13+ to show the persistent assistant notification and any
+         reminder/alarm notification. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Keeps voice listening and pending timers alive while the screen is off. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- Reminders and alarms at an exact time. On Android 12+ the user must grant this
+         in Settings; the app detects the denial and falls back to inexact scheduling. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
+    <!-- Re-arm reminders and automation rules after a reboot. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- "Send John a message" - resolving a spoken first name to a contact. -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
+    <!-- Only used by the user-created automation "when I connect my headphones". -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_CONNECT"
+        tools:targetApi="s" />
+
+    <!-- Only used by user-created location automations ("when I arrive at college").
+         Never used for background tracking. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <!-- Scoped package visibility: lets us resolve and launch any app that has a
+         launcher icon, without requesting blanket QUERY_ALL_PACKAGES. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="smsto" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="text/plain" />
+        </intent>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+        <intent>
+            <action android:name="android.media.browse.MediaBrowserService" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".JarvisApplication"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Jarvis"
+        android:enableOnBackInvokedCallback="true"
+        tools:targetApi="tiramisu">
+
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.Jarvis">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- "Assistant, assist" - offer Jarvis as an ASSIST target so it can be
+                 invoked from the system assistant gesture where the user opts in. -->
+            <intent-filter>
+                <action android:name="android.intent.action.ASSIST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+    </application>
+
+</manifest>

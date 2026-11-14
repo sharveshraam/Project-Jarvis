@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Jarvis</string>
+
+    <!-- The assistant's name is fully user-customisable at runtime; these strings are
+         only the shipped default. The real nickname comes from AssistantConfig. -->
+    <string name="default_assistant_nickname">Jarvis</string>
+
+    <string name="accessibility_service_label">Jarvis screen agent</string>
+    <string name="accessibility_service_description">Lets Jarvis read what is on screen and act on it when you ask: finding list items, tapping buttons, typing text and scrolling. Jarvis only does this for the task you described, and nothing leaves your device.</string>
+    <string name="notification_listener_label">Jarvis notifications</string>
+
+    <!-- Notification channels -->
+    <string name="channel_assistant_name">Assistant</string>
+    <string name="channel_assistant_description">Ongoing assistant status and voice listening indicator.</string>
+    <string name="channel_reminders_name">Reminders and alarms</string>
+    <string name="channel_reminders_description">Time-based reminders, alarms and timers you asked Jarvis to set.</string>
+    <string name="channel_automation_name">Automations</string>
+    <string name="channel_automation_description">Results and confirmations from your automation rules.</string>
+
+    <!-- Main screen -->
+    <string name="main_input_hint">Ask %1$s anything, or describe a multi-step task</string>
+    <string name="main_send">Send</string>
+    <string name="main_mic">Talk</string>
+    <string name="main_transcript_empty">Say hello. Everything you tell %1$s stays on this device.</string>
+    <string name="main_title">Jarvis</string>
+
+    <!-- Processing provenance: the app must always be explicit about where a request
+         was handled. -->
+    <string name="processing_local">Local processing — nothing left your device</string>
+    <string name="processing_online">Online processing — this request left your device</string>
+</resources>

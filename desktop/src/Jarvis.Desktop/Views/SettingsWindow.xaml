@@ -1,0 +1,35 @@
+<Window x:Class="Jarvis.Desktop.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="JARVIS Settings" Width="520" Height="640" WindowStartupLocation="CenterOwner" Loaded="Window_Loaded">
+    <ScrollViewer>
+        <StackPanel Margin="16">
+            <TextBlock Text="Settings" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,12"/>
+            <TextBlock Text="Gemini API key (stored with Windows DPAPI — never in settings files or logs)"/>
+            <PasswordBox x:Name="ApiKeyBox" Margin="0,4"/>
+            <StackPanel Orientation="Horizontal">
+                <Button Content="Save key" Click="SaveKey_Click"/>
+                <Button Content="Remove key" Click="RemoveKey_Click"/>
+                <TextBlock Text="{Binding KeyStatusText}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+            </StackPanel>
+            <TextBlock Text="Model" Margin="0,12,0,0"/>
+            <TextBox Text="{Binding Model}"/>
+            <CheckBox Content="Start with Windows (system tray)" IsChecked="{Binding StartWithWindows}" Margin="0,8,0,0"/>
+            <CheckBox Content="Speak responses aloud" IsChecked="{Binding SpeakResponses}"/>
+            <TextBlock Text="Push-to-talk shortcut" Margin="0,12,0,0"/>
+            <TextBox Text="{Binding PushToTalkShortcut}"/>
+            <TextBlock Text="Trusted routine actions (run without confirmation)" Margin="0,12,0,0"/>
+            <ListBox ItemsSource="{Binding TrustedActions}" Height="120"/>
+            <TextBlock Text="Indexed folders (one per line)" Margin="0,12,0,0"/>
+            <TextBox Text="{Binding IndexedFoldersText}" Height="80" TextWrapping="Wrap" AcceptsReturn="True"/>
+            <TextBlock Text="Stored memories" Margin="0,12,0,0"/>
+            <ListBox x:Name="MemoriesList" ItemsSource="{Binding Memories}" Height="120"/>
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                <Button Content="Delete selected memory" Click="DeleteMemory_Click"/>
+                <Button Content="Clear all memories" Click="ClearMemories_Click"/>
+                <Button Content="Clear all conversations" Click="ClearConversations_Click"/>
+            </StackPanel>
+            <Button Content="Close" Click="Close_Click" Margin="0,12,0,0"/>
+        </StackPanel>
+    </ScrollViewer>
+</Window>
